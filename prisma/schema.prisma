@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  name        String
+  email       String         @unique
+  role        String         // 'PhD student' or 'Professor'
+  password    String
+  reservationsMade Reservation[] @relation(name: "ReservationUser")
+  reservationsApproved Reservation[] @relation(name: "ReservationProfessor")
+}
+
+model Equipment {
+  id               Int      @id @default(autoincrement())
+  name             String
+  description      String
+  availabilityStatus String  // 'Available', 'Reserved', 'Unavailable'
+  reservations     Reservation[]
+}
+
+model Material {
+  id               Int      @id @default(autoincrement())
+  name             String
+  description      String
+  quantityAvailable Int
+  reservations     Reservation[]
+}
+
+model Reservation {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], name: "ReservationUser")
+  equipmentId   Int
+  equipment     Equipment @relation(fields: [equipmentId], references: [id])
+  materialId    Int?     // Nullable if only reserving equipment
+  material      Material? @relation(fields: [materialId], references: [id])
+  startTime     DateTime
+  endTime       DateTime
+  status        String   // 'Pending', 'Approved', 'Declined'
+  professorId   Int?     // Nullable for pending reservations
+  professor     User?    @relation(fields: [professorId], references: [id], name: "ReservationProfessor")
+}
